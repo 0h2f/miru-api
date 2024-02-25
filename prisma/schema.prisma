@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Manga {
+  id           Int         @id @default(autoincrement())
+  startedAt    DateTime
+  endedAt      DateTime
+  status       MangaStatus @default(RELEASING)
+  title        String      @db.VarChar(255)
+  imageCover   String?
+  imageCoverBg String?
+  author       Author      @relation(fields: [authorId], references: [id])
+  authorId     Int
+}
+
+model Author {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  Manga     Manga[]
+}
+
+model Post {
+  id        Int     @id @default(autoincrement())
+  image     String?
+  published Boolean @default(false)
+  author    User    @relation("WrittenPosts", fields: [authorId], references: [id])
+  authorId  Int
+}
+
+model User {
+  id             Int              @id @default(autoincrement())
+  email          String           @unique
+  username       String           @db.VarChar(255) @unique
+  name           String?
+  writtenPosts   Post[]           @relation("WrittenPosts")
+  comunityMember ComunityMember[] @relation("ComunityMember")
+}
+
+model Comunity {
+  id      Int              @id @default(autoincrement())
+  name    String?          @unique
+  image   String?
+  members ComunityMember[] @relation("Comunity")
+}
+
+model ComunityMember {
+  memberId   Int            @id
+  member     User           @relation("ComunityMember", fields: [memberId], references: [id])
+  comunity   Comunity       @relation("Comunity",fields: [comunityId], references: [id])
+  comunityId Int
+  roles      ComunityRole[] @relation("MemberRoles")
+}
+
+model ComunityRole {
+  id                  Int              @id @default(autoincrement())
+  name                String
+  comunityMemberRoles ComunityMember[] @relation("MemberRoles")
+}
+
+enum MangaStatus {
+  FINISHED
+  HIATUS
+  RELEASING
+  CANCELLED
+}
