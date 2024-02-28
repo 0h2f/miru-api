@@ -1,6 +1,7 @@
 import postRepository from "../repositories/postRepository";
 import type { Post } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
+import * as authService from "../services/authService";
 
 /*
 type ReqDictionary = { id?: string }
@@ -46,16 +47,36 @@ async function getPosts(req: Request, res: Response, next: NextFunction) {
 
 async function postPost(req: Request, res: Response, next: NextFunction) {
     try {
-        let post = req.body as Post;
-        let result = await postRepository.addPost(post);
+
+        let { image } = req.body;
+        let token = req.header('x-access-token');
+
+        if (!token)
+            throw new Error("This request requires user authentication.");
+        if (!image)
+            throw new Error("Cannot create post without image.");
+
+        let userToken = authService.decodeToken(token);
+        if (userToken.type != 'valid')
+            throw new Error(`Failed to validate authentication token: ${userToken.type}.`);
+
+        let result = await postRepository.addPost({
+            image: image,
+            authorId: userToken.tokenData.id,
+
+        });
 
         if (result)
             res.status(201).json(result);
         else
-            res.sendStatus(400);
+            res.sendStatus(500);
     }
-    catch (error) {
-        return res.sendStatus(500);
+    catch (_error) {
+        let error = _error as Error;
+        console.log(error);
+        res.status(500).json({
+            message: error.message
+        });
     }
 }
 

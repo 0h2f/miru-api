@@ -1,6 +1,8 @@
 import type { Post } from '@prisma/client'
 import { prisma } from "../app";
 
+export type PartialPost = Omit<Post, 'id' | 'published'> 
+
 async function getPost(id: number): Promise<Post | null> {
     return prisma.post.findUnique({
         where: {
@@ -13,7 +15,7 @@ async function getPosts(): Promise<Post[]> {
     return await prisma.post.findMany();
 }
 
-async function addPost(post: Post): Promise<Post> {
+async function addPost(post: PartialPost): Promise<Post> {
     return await prisma.post.create({ data: post });
 }
 
