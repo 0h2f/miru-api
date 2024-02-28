@@ -76,8 +76,8 @@ export function validateToken(tokenData: TokenData): TokenStatus {
 
 export function authenticateToken(req: Request, res: Response, next: NextFunction) {
     const authenticationHeader = 'x-access-token'
-    
     let token = req.header(authenticationHeader);
+    
     if (!token)
         throw new Error("This request requires user authentication.");
 

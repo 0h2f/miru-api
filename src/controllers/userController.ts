@@ -25,12 +25,8 @@ async function postUser(req: Request, res: Response, next: NextFunction) {
         else
             res.sendStatus(400);
     }
-    catch (_error) {
-        let error = _error as Error;
-        console.log(error);
-        res.status(500).json({
-            message: error.message
-        });
+    catch (error) {
+        next(error);
     }
 }
 
@@ -54,13 +50,9 @@ async function authenticateUser(req: Request, res: Response, next: NextFunction)
         res.status(201).send(accessToken);
 
         }
-    catch (_error) {
-        let error = _error as Error;
-        console.log(error);
-        res.status(500).json({
-            message: error.message
-        });
-    }
+        catch (error) {
+            next(error);
+        }
 }
 export default {
     postUser,

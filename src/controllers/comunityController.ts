@@ -18,8 +18,7 @@ async function getComunity(req: Request, res: Response, next: NextFunction) {
             res.sendStatus(404);
     }
     catch (error) {
-        console.log(error);
-        return res.sendStatus(500);
+        next(error);
     }
 }
 
@@ -35,7 +34,7 @@ async function postComunity(req: Request, res: Response, next: NextFunction) {
             res.sendStatus(400);
     }
     catch (error) {
-        return res.sendStatus(500);
+        next(error);
     }
 }
 

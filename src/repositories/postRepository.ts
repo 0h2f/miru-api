@@ -19,7 +19,7 @@ async function addPost(post: PartialPost): Promise<Post> {
     return await prisma.post.create({ data: post });
 }
 
-async function updatePost(id: number, newPost: Post): Promise<Post | null> {
+async function updatePost(id: number, newPost: PartialPost): Promise<Post | null> {
     return await prisma.post.update({
         where: {
             id: id

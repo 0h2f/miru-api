@@ -6,8 +6,8 @@ const postRouter = express.Router();
  
 postRouter.get('/', postController.getPosts);
 postRouter.get('/:id', postController.getPost);
-postRouter.post('/', postController.postPost, authService.authenticateToken);
-postRouter.patch('/:id', postController.patchPost);
+postRouter.post('/', authService.authenticateToken, postController.postPost);
+postRouter.patch('/', postController.patchPost);
 postRouter.delete('/', postController.deletePost);
  
 export default postRouter;

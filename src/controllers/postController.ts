@@ -26,8 +26,7 @@ async function getPost(req: Request, res: Response, next: NextFunction) {
             res.sendStatus(404);
     }
     catch (error) {
-        console.log(error);
-        return res.sendStatus(500);
+        next(error);
     }
 }
 
@@ -41,18 +40,15 @@ async function getPosts(req: Request, res: Response, next: NextFunction) {
             res.sendStatus(500);
     }
     catch (error) {
-        return res.sendStatus(500);
+        next(error);
     }
 }
 
 async function postPost(req: Request, res: Response, next: NextFunction) {
     try {
-
         let { image } = req.body;
-        let token = req.header('x-access-token');
+        let token = req.header('x-access-token')!;
 
-        if (!token)
-            throw new Error("This request requires user authentication.");
         if (!image)
             throw new Error("Cannot create post without image.");
 
@@ -71,12 +67,8 @@ async function postPost(req: Request, res: Response, next: NextFunction) {
         else
             res.sendStatus(500);
     }
-    catch (_error) {
-        let error = _error as Error;
-        console.log(error);
-        res.status(500).json({
-            message: error.message
-        });
+    catch (error) {
+        next(error);
     }
 }
 
@@ -85,10 +77,17 @@ async function deletePost(req: Request, res: Response, next: NextFunction) {
     try {
         let { id } = req.body;
         let parsedId = parseInt(id);
+        let token = req.header('x-access-token')!;
+        let userToken = authService.decodeToken(token);
 
+        if (userToken.type != 'valid')
+            throw new Error(`Failed to validate authentication token: ${userToken.type}.`);
         if (isNaN(parsedId))
             throw new Error("Id invalido");
 
+        let originalPost = await postRepository.getPost(parsedId);
+        if (originalPost?.authorId != userToken.tokenData.id)
+            throw new Error("User is not the author.");
         let deletedPost = await postRepository.deletePost(parsedId);
 
         if (deletedPost)
@@ -97,27 +96,41 @@ async function deletePost(req: Request, res: Response, next: NextFunction) {
             res.sendStatus(404);
     }
     catch (error) {
-        return res.sendStatus(500);
+        next(error);
     }
 }
 
 async function patchPost(req: Request, res: Response, next: NextFunction) {
     try {
-        let post = req.body as Post;
-        let { id } = req.params;
+
+        let { image, id } = req.body;
         let parsedId = parseInt(id);
+        let token = req.header('x-access-token')!;
 
-        if (isNaN(parsedId))
-            throw new Error("Id invalido");
+        if (isNaN(parsedId) || !parsedId)
+            throw new Error("Invalid post ID");
+        if (!image)
+            throw new Error("Cannot modify post without image.");
 
-        let updatedPost = await postRepository.updatePost(parsedId, post);
+        let userToken = authService.decodeToken(token);
+        if (userToken.type != 'valid')
+            throw new Error(`Failed to validate authentication token: ${userToken.type}.`);
+
+        let originalPost = await postRepository.getPost(parsedId);
+        if (originalPost?.authorId != userToken.tokenData.id)
+            throw new Error("User is not the author.");
+
+        let updatedPost = await postRepository.updatePost(parsedId, {
+            image: image,
+            authorId: userToken.tokenData.id
+        });
         if (updatedPost)
             res.status(200).json(updatedPost);
         else
             res.sendStatus(404);
     }
     catch (error) {
-        return res.sendStatus(500);
+        next(error);
     }
 }
 
